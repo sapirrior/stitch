@@ -28,12 +28,12 @@ static char *buffer_rows_to_string(StitchBuffer *buf, size_t *buflen) {
     return res;
 }
 
-void editorSave(StitchState *state) {
+bool editorSave(StitchState *state) {
     if (state->buffer.filename == NULL) {
         state->buffer.filename = ui_prompt(state, "Save as: %s", NULL);
         if (state->buffer.filename == NULL) {
             ui_set_status_message(state, "Save aborted");
-            return;
+            return false;
         }
     }
 
@@ -70,7 +70,7 @@ void editorSave(StitchState *state) {
                     free(tmp_filename);
                     state->buffer.dirty = 0;
                     ui_set_status_message(state, "%zu bytes written to disk", len);
-                    return;
+                    return true;
                 }
             } else {
                 fclose(fp);
@@ -86,6 +86,7 @@ void editorSave(StitchState *state) {
     }
     free(buf);
     ui_set_status_message(state, "Save failed: %s", strerror(errno));
+    return false;
 }
 
 int editorOpen(StitchState *state, char *filename) {

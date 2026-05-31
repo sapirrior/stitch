@@ -3,6 +3,8 @@
 
 #include "stitch/types.h"
 
+#include <stdbool.h>
+
 /* Mode handlers */
 void handle_normal_mode(StitchState *state, int c);
 void handle_insert_mode(StitchState *state, int c);
@@ -10,7 +12,7 @@ void handle_command_prompt_mode(StitchState *state, int c);
 void handle_visual_mode(StitchState *state, int c);
 
 /* Command components */
-void cmd_save_execute(StitchState *state);
+bool cmd_save_execute(StitchState *state);
 void cmd_quit_execute(StitchState *state);
 void cmd_search_execute(StitchState *state);
 void cmd_shell_execute(StitchState *state, const char *command);

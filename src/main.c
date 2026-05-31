@@ -23,6 +23,8 @@ void init_app_state(StitchState *state) {
     state->buffer.undo_stack.head = NULL;
     state->buffer.undo_stack.current = NULL;
     state->buffer.is_undoing = false;
+    state->buffer.group_undo = false;
+    state->buffer.disable_update_line = false;
 
     state->view.cx = 0;
     state->view.cy = 0;
@@ -53,9 +55,9 @@ int main(int argc, char *argv[]) {
     setlocale(LC_ALL, "");
     
     StitchState app;
+    atexit(app_at_exit);
     core_enable_raw_mode(&app);
     init_app_state(&app);
-    atexit(app_at_exit);
 
     if (argc >= 2) {
         if (editorOpen(&app, argv[1]) == -1) {

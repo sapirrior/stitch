@@ -43,24 +43,28 @@ void ui_update_viewport(StitchState *state) {
     int margin_y = 3;
     if (margin_y > state->view.screen_rows / 2) margin_y = state->view.screen_rows / 2;
 
-    if (state->view.cy < state->view.row_off + (size_t)margin_y) {
-        state->view.row_off = (state->view.cy < (size_t)margin_y) ? 0 : state->view.cy - (size_t)margin_y;
-    }
-    if (state->view.cy >= state->view.row_off + (size_t)state->view.screen_rows - (size_t)margin_y) {
-        state->view.row_off = (state->view.cy + (size_t)margin_y + 1 > (size_t)state->view.screen_rows) ? 
-                              state->view.cy - (size_t)state->view.screen_rows + (size_t)margin_y + 1 : 0;
+    if ((size_t)state->view.screen_rows > (size_t)margin_y) {
+        if (state->view.cy < state->view.row_off + (size_t)margin_y) {
+            state->view.row_off = (state->view.cy < (size_t)margin_y) ? 0 : state->view.cy - (size_t)margin_y;
+        }
+        if (state->view.cy >= state->view.row_off + (size_t)state->view.screen_rows - (size_t)margin_y) {
+            state->view.row_off = (state->view.cy + (size_t)margin_y + 1 > (size_t)state->view.screen_rows) ? 
+                                  state->view.cy - (size_t)state->view.screen_rows + (size_t)margin_y + 1 : 0;
+        }
     }
 
     /* Horizontal Scroll Margins (sidescrolloff) */
     int margin_x = 5;
     if (margin_x > available_cols / 2) margin_x = available_cols / 2;
 
-    if (state->view.rx < state->view.col_off + (size_t)margin_x) {
-        state->view.col_off = (state->view.rx < (size_t)margin_x) ? 0 : state->view.rx - (size_t)margin_x;
-    }
-    if (state->view.rx >= state->view.col_off + (size_t)available_cols - (size_t)margin_x) {
-        state->view.col_off = (state->view.rx + (size_t)margin_x + 1 > (size_t)available_cols) ?
-                              state->view.rx - (size_t)available_cols + (size_t)margin_x + 1 : 0;
+    if ((size_t)available_cols > (size_t)margin_x) {
+        if (state->view.rx < state->view.col_off + (size_t)margin_x) {
+            state->view.col_off = (state->view.rx < (size_t)margin_x) ? 0 : state->view.rx - (size_t)margin_x;
+        }
+        if (state->view.rx >= state->view.col_off + (size_t)available_cols - (size_t)margin_x) {
+            state->view.col_off = (state->view.rx + (size_t)margin_x + 1 > (size_t)available_cols) ?
+                                  state->view.rx - (size_t)available_cols + (size_t)margin_x + 1 : 0;
+        }
     }
 }
 

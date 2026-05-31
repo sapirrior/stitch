@@ -9,6 +9,7 @@ void editor_move_cursor(StitchState *state, int key) {
     switch (key) {
         case 'h':
         case STITCH_ARROW_LEFT:
+            if (!line) { state->view.cx = 0; break; }
             if (state->view.cx > 0) {
                 state->view.cx--;
                 while (state->view.cx > 0 && !editorIsUtf8Start((unsigned char)line->chars[state->view.cx])) 

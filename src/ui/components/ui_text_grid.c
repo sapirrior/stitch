@@ -41,7 +41,8 @@ static bool find_matching_bracket(StitchState *state, size_t *match_y, size_t *m
     size_t y = state->view.cy;
     size_t x = state->view.cx;
 
-    while (true) {
+    size_t max_iter = state->buffer.num_lines * 2 + 1024;
+    while (max_iter-- > 0) {
         if (dir == 1) {
             x++;
             if (x >= state->buffer.lines[y].size) {
@@ -72,6 +73,7 @@ static bool find_matching_bracket(StitchState *state, size_t *match_y, size_t *m
             return true;
         }
     }
+    return false;
 }
 
 static bool get_visual_selection_bytes(StitchState *state, size_t filerow, size_t *start_byte, size_t *end_byte) {

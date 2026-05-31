@@ -28,17 +28,19 @@ void buffer_push_undo(StitchBuffer *buf, UndoActionType type, size_t cy, size_t 
     unsigned int group_id = 1;
     if (buf->undo_stack.current) {
         UndoAction *prev = buf->undo_stack.current;
-        bool group = false;
+        bool group = buf->group_undo;
         
-        if (type == UNDO_INSERT_CHAR && prev->type == UNDO_INSERT_CHAR) {
-            /* Group contiguous typing, but break on space to undo word-by-word */
-            if (cy == prev->cy && cx == prev->cx + 1 && prev->c != ' ' && prev->c != '\t') {
-                group = true;
-            }
-        } else if (type == UNDO_DELETE_CHAR && prev->type == UNDO_DELETE_CHAR) {
-            /* Group contiguous deletions (backspace or del) */
-            if (cy == prev->cy && (cx == prev->cx || cx == prev->cx - 1)) {
-                group = true;
+        if (!group) {
+            if (type == UNDO_INSERT_CHAR && prev->type == UNDO_INSERT_CHAR) {
+                /* Group contiguous typing, but break on space to undo word-by-word */
+                if (cy == prev->cy && cx == prev->cx + 1 && prev->c != ' ' && prev->c != '\t') {
+                    group = true;
+                }
+            } else if (type == UNDO_DELETE_CHAR && prev->type == UNDO_DELETE_CHAR) {
+                /* Group contiguous deletions (backspace or del) */
+                if (cy == prev->cy && (cx == prev->cx || cx == prev->cx - 1)) {
+                    group = true;
+                }
             }
         }
         

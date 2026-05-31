@@ -12,6 +12,7 @@ void sys_init_colors(void) {
         init_color(11, 840, 580, 480); /* Terracotta Orange */
         init_color(12, 940, 780, 380); /* Ochre Yellow */
         init_color(13, 184, 165, 157); /* Earth Background */
+        init_color(14, 600, 400, 600); /* Muted Plum */
     }
 
     /* 1: Earth on Sage (Normal Mode) */
@@ -26,6 +27,8 @@ void sys_init_colors(void) {
     init_pair(5, 13, 10);
     /* 6: Earth Background for Status Bar */
     init_pair(6, -1, 13);
+    /* 7: Earth on Plum (Visual Mode) */
+    init_pair(7, 13, 14);
     
     bkgd(COLOR_PAIR(4));
 }

@@ -21,6 +21,9 @@ static void get_visual_bounds(StitchState *state, size_t *sy, size_t *sx, size_t
 }
 
 static void delete_visual_block(StitchState *state, size_t sy, size_t sx, size_t ey, size_t ex) {
+    state->buffer.group_undo = true;
+    state->buffer.disable_update_line = true;
+    
     state->view.cy = ey;
     state->view.cx = ex;
 
@@ -40,7 +43,10 @@ static void delete_visual_block(StitchState *state, size_t sy, size_t sx, size_t
     }
 
     while (state->view.cy > sy || (state->view.cy == sy && state->view.cx > sx)) {
+        size_t old_cy = state->view.cy;
+        size_t old_cx = state->view.cx;
         buffer_del_char(&state->buffer, &state->view);
+        if (state->view.cy == old_cy && state->view.cx == old_cx) break;
     }
     
     if (state->view.cy >= state->buffer.num_lines) {
@@ -52,6 +58,13 @@ static void delete_visual_block(StitchState *state, size_t sy, size_t sx, size_t
         }
     } else {
         state->view.cx = 0;
+    }
+
+    state->buffer.disable_update_line = false;
+    state->buffer.group_undo = false;
+    
+    if (state->view.cy < state->buffer.num_lines) {
+        buffer_update_line(&state->buffer.lines[state->view.cy]);
     }
 }
 

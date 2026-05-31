@@ -4,6 +4,6 @@
 #include "stitch/ui/render.h"
 #include "../editor_internal.h"
 
-void cmd_save_execute(StitchState *state) {
-    editorSave(state);
+bool cmd_save_execute(StitchState *state) {
+    return editorSave(state);
 }

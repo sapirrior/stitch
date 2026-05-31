@@ -22,6 +22,7 @@ void handle_normal_mode(StitchState *state, int c) {
 
     switch (c) {
         case 'i':
+            state->editor.last_key = 0;
             state->editor.mode = MODE_INSERT;
             ui_set_status_message(state, "-- INSERT --");
             break;
@@ -30,30 +31,36 @@ void handle_normal_mode(StitchState *state, int c) {
                 Line *line = &state->buffer.lines[state->view.cy];
                 if (state->view.cx < line->size) state->view.cx++;
             }
+            state->editor.last_key = 0;
             state->editor.mode = MODE_INSERT;
             ui_set_status_message(state, "-- INSERT --");
             break;
         case 'A':
             if (state->view.cy < state->buffer.num_lines) state->view.cx = state->buffer.lines[state->view.cy].size;
+            state->editor.last_key = 0;
             state->editor.mode = MODE_INSERT;
             ui_set_status_message(state, "-- INSERT --");
             break;
-        case 'o':
-            state->view.cy++;
-            buffer_insert_line(&state->buffer, state->view.cy, "", 0);
-            buffer_push_undo(&state->buffer, UNDO_INSERT_LINE, state->view.cy, 0, 0, NULL, 0);
+        case 'o': {
+            size_t insert_at = (state->view.cy < state->buffer.num_lines) ? state->view.cy + 1 : state->buffer.num_lines;
+            buffer_insert_line(&state->buffer, insert_at, "", 0);
+            buffer_push_undo(&state->buffer, UNDO_INSERT_LINE, insert_at, 0, 0, NULL, 0);
+            state->view.cy = insert_at;
             state->view.cx = 0;
             state->editor.mode = MODE_INSERT;
             ui_set_status_message(state, "-- INSERT --");
             break;
+        }
         case 'O':
             buffer_insert_line(&state->buffer, state->view.cy, "", 0);
             buffer_push_undo(&state->buffer, UNDO_INSERT_LINE, state->view.cy, 0, 0, NULL, 0);
             state->view.cx = 0;
+            state->editor.last_key = 0;
             state->editor.mode = MODE_INSERT;
             ui_set_status_message(state, "-- INSERT --");
             break;
         case 'v':
+            state->editor.last_key = 0;
             state->editor.mode = MODE_VISUAL;
             state->editor.visual_cx = state->view.cx;
             state->editor.visual_cy = state->view.cy;
@@ -66,10 +73,12 @@ void handle_normal_mode(StitchState *state, int c) {
             buffer_redo(&state->buffer, &state->view);
             break;
         case ':':
+            state->editor.last_key = 0;
             state->editor.mode = MODE_COMMAND;
             handle_command_prompt_mode(state, c);
             break;
         case '/':
+            state->editor.last_key = 0;
             cmd_search_execute(state);
             break;
         case 'h':

@@ -47,8 +47,9 @@ void editor_handle_command(StitchState *state, const char *cmd) {
         state->ui.show_line_numbers = false;
         ui_set_status_message(state, "Line numbers disabled");
     } else if (strcmp(cmd, "wq") == 0) {
-        cmd_save_execute(state);
-        exit(0);
+        if (cmd_save_execute(state)) {
+            exit(0);
+        }
     } else if (strcmp(cmd, "h") == 0 || strcmp(cmd, "help") == 0) {
         state->ui.show_help_overlay = true;
     } else if (strncmp(cmd, "e ", 2) == 0) {
@@ -82,6 +83,7 @@ void editor_update_shell_status(StitchState *state) {
         }
         state->core.shell_pid = -1;
     } else if (result == -1) {
+        if (errno == EINTR) return;
         if (errno != ECHILD) {
             ui_set_status_message(state, "Waitpid error: %s", strerror(errno));
         }

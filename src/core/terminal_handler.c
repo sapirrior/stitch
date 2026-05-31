@@ -11,7 +11,7 @@ void core_disable_raw_mode(void) {
     /* Re-enable Bracketed Paste Mode on exit so shell continues to behave correctly */
     printf("\x1b[?2004h");
     fflush(stdout);
-    endwin();
+    if (!isendwin()) endwin();
 }
 
 int core_read_key(StitchState *state) {

@@ -27,6 +27,8 @@ void cmd_shell_execute(StitchState *state, const char *cmd) {
             dup2(devnull, STDOUT_FILENO);
             dup2(devnull, STDERR_FILENO);
             close(devnull);
+        } else {
+            exit(127);
         }
         
         char *args[] = {"sh", "-c", (char *)cmd, NULL};

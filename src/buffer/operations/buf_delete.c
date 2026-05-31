@@ -9,7 +9,7 @@ void buffer_row_del_char(StitchBuffer *buf, Line *line, size_t at) {
     if (at >= line->size) return;
     memmove(&line->chars[at], &line->chars[at + 1], line->size - at);
     line->size--;
-    buffer_update_line(line);
+    if (!buf->disable_update_line) buffer_update_line(line);
     buf->dirty++;
 }
 

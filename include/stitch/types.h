@@ -81,6 +81,8 @@ typedef struct {
     int dirty;
     UndoStack undo_stack;
     bool is_undoing;
+    bool group_undo;
+    bool disable_update_line;
 } StitchBuffer;
 
 typedef struct {
