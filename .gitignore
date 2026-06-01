@@ -1,5 +1,6 @@
 # Build artifacts
 build/
+build/*
 
 # Object files (backup in case they are generated outside build/)
 *.o

@@ -5,7 +5,7 @@ BUILD_DIR = build
 OBJ_DIR = $(BUILD_DIR)/objs
 
 # Find all .c files in SRC_DIR and its subdirectories
-SRC = $(shell find $(SRC_DIR) -name "*.c")
+SRC = $(shell find $(SRC_DIR) -name "*.c" ! -name "ui_help_overlay.c")
 # Map source files to object files in OBJ_DIR, mirroring the structure
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 TARGET = $(BUILD_DIR)/stitch

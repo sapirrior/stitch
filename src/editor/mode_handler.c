@@ -9,15 +9,6 @@ void editor_process_keypress(StitchState *state) {
 
     if (c == STITCH_KEY_NONE) return;
 
-    if (state->ui.show_help_overlay) {
-        if (c == STITCH_KEY_RESIZE) {
-            ui_handle_resize(state);
-        } else if (c == '\x1b') {
-            state->ui.show_help_overlay = false;
-        }
-        return;
-    }
-
     if (c == STITCH_KEY_RESIZE) {
         ui_handle_resize(state);
         return;
@@ -27,7 +18,7 @@ void editor_process_keypress(StitchState *state) {
         MEVENT event;
         if (getmouse(&event) == OK) {
             if (event.bstate & (BUTTON1_CLICKED | BUTTON1_PRESSED)) {
-                if (event.y < state->view.screen_rows) {
+                if (event.y >= 0 && event.x >= 0 && event.y < state->view.screen_rows) {
                     ui_screen_to_buffer(state, event.y, event.x, &state->view.cy, &state->view.cx);
                 }
             }

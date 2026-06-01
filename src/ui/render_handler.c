@@ -74,13 +74,12 @@ void ui_refresh_screen(StitchState *state) {
     ui_text_grid_draw(state);
     ui_status_bar_draw(state);
     ui_message_bar_draw(state);
-    
-    ui_help_overlay_draw(state);
-
     /* Position cursor */
     if (state->editor.mode == MODE_COMMAND) {
+        size_t cursor_byte_idx = state->ui.prompt_cursor_offset + state->ui.prompt_cursor;
         size_t msg_len = strlen(state->ui.status_msg);
-        size_t msg_cols = editorRowByteToCol(state->ui.status_msg, msg_len, msg_len);
+        if (cursor_byte_idx > msg_len) cursor_byte_idx = msg_len;
+        size_t msg_cols = editorRowByteToCol(state->ui.status_msg, msg_len, cursor_byte_idx);
         move(state->view.screen_rows + 1, (int)msg_cols);
     } else {
         int gutter_width = ui_get_gutter_width(state);

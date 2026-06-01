@@ -97,7 +97,8 @@ typedef struct {
 typedef struct {
     char status_msg[80];
     bool show_line_numbers;
-    bool show_help_overlay;
+    size_t prompt_cursor;
+    size_t prompt_cursor_offset;
 } StitchUI;
 
 typedef struct {
@@ -108,6 +109,8 @@ typedef struct {
     int history_count;
     size_t visual_cx;
     size_t visual_cy;
+    char *clipboard;
+    size_t clipboard_len;
 } StitchEditor;
 
 typedef struct {
@@ -123,6 +126,10 @@ typedef struct {
     StitchUI ui;
     StitchEditor editor;
     StitchCore core;
+    
+    StitchBuffer stashed_buffer;
+    StitchView stashed_view;
+    bool has_stash;
 } StitchState;
 
 #endif

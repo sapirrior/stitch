@@ -18,10 +18,41 @@ void handle_normal_mode(StitchState *state, int c) {
         }
         state->editor.last_key = 0;
         return;
+    } else if (state->editor.last_key == 'y') {
+        if (c == 'y') {
+            if (state->view.cy < state->buffer.num_lines) {
+                if (state->editor.clipboard) free(state->editor.clipboard);
+                Line *line = &state->buffer.lines[state->view.cy];
+                state->editor.clipboard = editorMalloc(line->size + 2);
+                memcpy(state->editor.clipboard, line->chars, line->size);
+                state->editor.clipboard[line->size] = '\n';
+                state->editor.clipboard[line->size + 1] = '\0';
+                state->editor.clipboard_len = line->size + 1;
+                ui_set_status_message(state, "Yanked 1 line");
+            }
+        }
+        state->editor.last_key = 0;
+        return;
+    } else if (state->editor.last_key == 'f') {
+        editor_find_char(state, c);
+        state->editor.last_key = 0;
+        return;
     }
 
     switch (c) {
         case 'i':
+            state->editor.last_key = 0;
+            state->editor.mode = MODE_INSERT;
+            ui_set_status_message(state, "-- INSERT --");
+            break;
+        case 'I':
+            if (state->view.cy < state->buffer.num_lines) {
+                Line *line = &state->buffer.lines[state->view.cy];
+                state->view.cx = 0;
+                while (state->view.cx < line->size && (line->chars[state->view.cx] == ' ' || line->chars[state->view.cx] == '\t')) {
+                    state->view.cx++;
+                }
+            }
             state->editor.last_key = 0;
             state->editor.mode = MODE_INSERT;
             ui_set_status_message(state, "-- INSERT --");
@@ -51,6 +82,15 @@ void handle_normal_mode(StitchState *state, int c) {
             ui_set_status_message(state, "-- INSERT --");
             break;
         }
+        case 'w':
+            editor_move_word_forward(state);
+            break;
+        case 'b':
+            editor_move_word_backward(state);
+            break;
+        case 'f':
+            state->editor.last_key = 'f';
+            break;
         case 'O':
             buffer_insert_line(&state->buffer, state->view.cy, "", 0);
             buffer_push_undo(&state->buffer, UNDO_INSERT_LINE, state->view.cy, 0, 0, NULL, 0);
@@ -115,7 +155,6 @@ void handle_normal_mode(StitchState *state, int c) {
             if (state->view.cy < state->buffer.num_lines) {
                 Line *line = &state->buffer.lines[state->view.cy];
                 if (state->view.cx < line->size) {
-                    /* Move cx to the start of the next character */
                     state->view.cx++;
                     while (state->view.cx < line->size && !editorIsUtf8Start((unsigned char)line->chars[state->view.cx])) {
                         state->view.cx++;
@@ -124,8 +163,74 @@ void handle_normal_mode(StitchState *state, int c) {
                 }
             }
             break;
+        case 'c':
+            if (state->view.cy < state->buffer.num_lines) {
+                Line *line = &state->buffer.lines[state->view.cy];
+                if (state->view.cx < line->size) {
+                    state->view.cx++;
+                    while (state->view.cx < line->size && !editorIsUtf8Start((unsigned char)line->chars[state->view.cx])) {
+                        state->view.cx++;
+                    }
+                    buffer_del_char(&state->buffer, &state->view);
+                }
+            }
+            state->editor.last_key = 0;
+            state->editor.mode = MODE_INSERT;
+            ui_set_status_message(state, "-- INSERT --");
+            break;
+        case 'D':
+        case 'C':
+            if (state->view.cy < state->buffer.num_lines) {
+                Line *line = &state->buffer.lines[state->view.cy];
+                if (state->view.cx < line->size) {
+                    size_t del_len = line->size - state->view.cx;
+                    buffer_push_undo(&state->buffer, UNDO_DELETE_CHAR, state->view.cy, state->view.cx, 0, &line->chars[state->view.cx], del_len);
+                    line->size = state->view.cx;
+                    line->chars[line->size] = '\0';
+                    state->buffer.dirty = true;
+                    if (!state->buffer.disable_update_line) buffer_update_line(line);
+                }
+            }
+            if (c == 'C') {
+                state->editor.mode = MODE_INSERT;
+                ui_set_status_message(state, "-- INSERT --");
+            }
+            break;
+        case 'p':
+            if (state->editor.clipboard && state->editor.clipboard_len > 0) {
+                state->buffer.group_undo = true;
+                state->buffer.disable_update_line = true;
+                size_t start_cy = state->view.cy;
+                
+                if (state->view.cy < state->buffer.num_lines) {
+                    Line *line = &state->buffer.lines[state->view.cy];
+                    if (state->view.cx < line->size) state->view.cx++;
+                }
+
+                for (size_t i = 0; i < state->editor.clipboard_len; i++) {
+                    char c = state->editor.clipboard[i];
+                    if (c == '\n') {
+                        buffer_insert_newline(&state->buffer, &state->view);
+                    } else {
+                        buffer_insert_char(&state->buffer, &state->view, c);
+                    }
+                }
+                
+                state->buffer.disable_update_line = false;
+                state->buffer.group_undo = false;
+                
+                for (size_t i = start_cy; i <= state->view.cy; i++) {
+                    if (i < state->buffer.num_lines) {
+                        buffer_update_line(&state->buffer.lines[i]);
+                    }
+                }
+            }
+            break;
         case 'd':
             state->editor.last_key = 'd';
+            break;
+        case 'y':
+            state->editor.last_key = 'y';
             break;
         case STITCH_PAGE_UP:
         case STITCH_PAGE_DOWN:

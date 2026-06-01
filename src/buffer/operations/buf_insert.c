@@ -17,7 +17,7 @@ void buffer_row_insert_char(StitchBuffer *buf, Line *line, size_t at, int c) {
     memmove(&line->chars[at + 1], &line->chars[at], line->size - at + 1);
     line->size++;
     line->chars[at] = c;
-    buffer_update_line(line);
+    if (!buf->disable_update_line) buffer_update_line(line);
     buf->dirty++;
 }
 
@@ -62,7 +62,7 @@ void buffer_insert_newline(StitchBuffer *buf, StitchView *view) {
         line = &buf->lines[view->cy];
         line->size = view->cx;
         line->chars[line->size] = '\0';
-        buffer_update_line(line);
+        if (!buf->disable_update_line) buffer_update_line(line);
     }
     view->cy++;
     view->cx = 0;

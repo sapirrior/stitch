@@ -20,6 +20,65 @@ static void get_visual_bounds(StitchState *state, size_t *sy, size_t *sx, size_t
     }
 }
 
+static void yank_visual_block(StitchState *state, size_t sy, size_t sx, size_t ey, size_t ex) {
+    if (state->editor.clipboard) {
+        free(state->editor.clipboard);
+        state->editor.clipboard = NULL;
+    }
+    state->editor.clipboard_len = 0;
+
+    if (ey < state->buffer.num_lines) {
+        Line *line = &state->buffer.lines[ey];
+        if (ex < line->size) {
+            ex++;
+            while (ex < line->size && !editorIsUtf8Start((unsigned char)line->chars[ex])) {
+                ex++;
+            }
+        } else {
+            if (ey < state->buffer.num_lines - 1) {
+                ey++;
+                ex = 0;
+            }
+        }
+    }
+
+    size_t total_len = 0;
+    if (sy == ey) {
+        total_len = ex > sx ? ex - sx : 0;
+    } else {
+        total_len = state->buffer.lines[sy].size - sx + 1;
+        for (size_t i = sy + 1; i < ey; i++) {
+            total_len += state->buffer.lines[i].size + 1;
+        }
+        total_len += ex;
+    }
+
+    if (total_len == 0) return;
+
+    state->editor.clipboard = editorMalloc(total_len + 1);
+    state->editor.clipboard_len = total_len;
+
+    size_t offset = 0;
+    if (sy == ey) {
+        memcpy(state->editor.clipboard, &state->buffer.lines[sy].chars[sx], total_len);
+    } else {
+        size_t len = state->buffer.lines[sy].size - sx;
+        memcpy(state->editor.clipboard + offset, &state->buffer.lines[sy].chars[sx], len);
+        offset += len;
+        state->editor.clipboard[offset++] = '\n';
+        
+        for (size_t i = sy + 1; i < ey; i++) {
+            len = state->buffer.lines[i].size;
+            memcpy(state->editor.clipboard + offset, state->buffer.lines[i].chars, len);
+            offset += len;
+            state->editor.clipboard[offset++] = '\n';
+        }
+        
+        memcpy(state->editor.clipboard + offset, state->buffer.lines[ey].chars, ex);
+    }
+    state->editor.clipboard[total_len] = '\0';
+}
+
 static void delete_visual_block(StitchState *state, size_t sy, size_t sx, size_t ey, size_t ex) {
     state->buffer.group_undo = true;
     state->buffer.disable_update_line = true;
@@ -71,6 +130,12 @@ static void delete_visual_block(StitchState *state, size_t sy, size_t sx, size_t
 void handle_visual_mode(StitchState *state, int c) {
     size_t sy, sx, ey, ex;
 
+    if (state->editor.last_key == 'f') {
+        editor_find_char(state, c);
+        state->editor.last_key = 0;
+        return;
+    }
+
     switch (c) {
         case '\x1b':
         case 'v':
@@ -86,6 +151,15 @@ void handle_visual_mode(StitchState *state, int c) {
         case STITCH_ARROW_LEFT:
         case STITCH_ARROW_RIGHT:
             editor_move_cursor(state, c);
+            break;
+        case 'w':
+            editor_move_word_forward(state);
+            break;
+        case 'b':
+            editor_move_word_backward(state);
+            break;
+        case 'f':
+            state->editor.last_key = 'f';
             break;
         case '0':
         case STITCH_HOME_KEY:
@@ -119,8 +193,10 @@ void handle_visual_mode(StitchState *state, int c) {
             }
             break;
         case 'y':
+            get_visual_bounds(state, &sy, &sx, &ey, &ex);
+            yank_visual_block(state, sy, sx, ey, ex);
             state->editor.mode = MODE_NORMAL;
-            ui_set_status_message(state, "Yank temporarily disabled");
+            ui_set_status_message(state, "Yanked %zu bytes", state->editor.clipboard_len);
             break;
         case 'd':
         case 'x':
@@ -128,6 +204,46 @@ void handle_visual_mode(StitchState *state, int c) {
             delete_visual_block(state, sy, sx, ey, ex);
             state->editor.mode = MODE_NORMAL;
             ui_set_status_message(state, "");
+            break;
+        case 'c':
+            get_visual_bounds(state, &sy, &sx, &ey, &ex);
+            delete_visual_block(state, sy, sx, ey, ex);
+            state->editor.mode = MODE_INSERT;
+            ui_set_status_message(state, "-- INSERT --");
+            break;
+        case '>':
+            get_visual_bounds(state, &sy, &sx, &ey, &ex);
+            state->buffer.group_undo = true;
+            for (size_t i = sy; i <= ey; i++) {
+                if (i < state->buffer.num_lines) {
+                    state->view.cy = i;
+                    state->view.cx = 0;
+                    buffer_insert_char(&state->buffer, &state->view, ' ');
+                    buffer_insert_char(&state->buffer, &state->view, ' ');
+                    buffer_insert_char(&state->buffer, &state->view, ' ');
+                    buffer_insert_char(&state->buffer, &state->view, ' ');
+                }
+            }
+            state->buffer.group_undo = false;
+            state->editor.mode = MODE_NORMAL;
+            break;
+        case '<':
+            get_visual_bounds(state, &sy, &sx, &ey, &ex);
+            state->buffer.group_undo = true;
+            for (size_t i = sy; i <= ey; i++) {
+                if (i < state->buffer.num_lines) {
+                    Line *line = &state->buffer.lines[i];
+                    for (int k = 0; k < 4; k++) {
+                        if (line->size > 0 && line->chars[0] == ' ') {
+                            state->view.cy = i;
+                            state->view.cx = 1;
+                            buffer_del_char(&state->buffer, &state->view);
+                        }
+                    }
+                }
+            }
+            state->buffer.group_undo = false;
+            state->editor.mode = MODE_NORMAL;
             break;
     }
 }

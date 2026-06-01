@@ -33,6 +33,8 @@ void init_app_state(StitchState *state) {
 
     state->ui.status_msg[0] = '\0';
     state->ui.show_line_numbers = false;
+    state->ui.prompt_cursor = 0;
+    state->ui.prompt_cursor_offset = 0;
 
     state->editor.mode = MODE_NORMAL;
     state->editor.last_key = 0;
@@ -40,14 +42,14 @@ void init_app_state(StitchState *state) {
     state->editor.history_count = 0;
     for (int i = 0; i < 10; i++) state->editor.history[i] = NULL;
 
+    state->editor.clipboard = NULL;
+    state->editor.clipboard_len = 0;
+
     state->core.shell_pid = -1;
 
     core_get_window_size(&state->view.screen_rows, &state->view.screen_cols);
-    if (state->view.screen_rows < 3) {
-        state->view.screen_rows = 1;
-    } else {
-        state->view.screen_rows -= 2;
-    }
+    state->view.screen_rows -= 2; // Reserve for status bar and message bar
+    if (state->view.screen_rows < 0) state->view.screen_rows = 0;
     if (state->view.screen_cols < 1) state->view.screen_cols = 1;
 }
 

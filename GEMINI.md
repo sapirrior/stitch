@@ -7,7 +7,7 @@ Stitch is a C11 modal text editor that combines a clean bottom-bar aesthetic wit
 
 ## Architecture
 
-The codebase is organized into four primary domains, following a **Handler-Component** pattern. Global state is strictly forbidden; all application data is encapsulated in a [StitchState](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L118) context and injected via pointers.
+The codebase is organized into four primary domains, following a **Handler-Component** pattern. Global state is strictly forbidden; all application data is encapsulated in a [StitchState](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L123) context and injected via pointers.
 
 ### Domain Map & Component Breakdown
 
@@ -32,9 +32,9 @@ The codebase is organized into four primary domains, following a **Handler-Compo
     - [ui_status_bar.c](file:///data/data/com.termux/files/home/works/stitch/src/ui/components/ui_status_bar.c): Renders the mode bar at the bottom, drawing current Mode, filename, modification status, and cursor coordinates.
     - [ui_message_bar.c](file:///data/data/com.termux/files/home/works/stitch/src/ui/components/ui_message_bar.c): Displays prompt labels, error messages, and info notifications.
     - [ui_text_grid.c](file:///data/data/com.termux/files/home/works/stitch/src/ui/components/ui_text_grid.c): Renders buffer line characters, selection highlighting (Visual Mode), dynamic line numbers, and matching bracket pairing highlights.
-    - [ui_help_overlay.c](file:///data/data/com.termux/files/home/works/stitch/src/ui/components/ui_help_overlay.c): Displays a list of quick keybindings in a popup menu block.
 
 - **Editor (`src/editor/`)**: Action dispatchers, mode management, and built-in interactive commands.
+  - [tutor_text.h](file:///data/data/com.termux/files/home/works/stitch/src/editor/tutor_text.h): A comprehensive, interactive 11-lesson tutorial buffer that safely loads over the current file using the Stashed Buffer technique.
   - [mode_handler.c](file:///data/data/com.termux/files/home/works/stitch/src/editor/mode_handler.c): Routes input characters to specific sub-handlers according to the current editor mode.
   - [command_handler.c](file:///data/data/com.termux/files/home/works/stitch/src/editor/command_handler.c): Parses command inputs (like `:nu`, `:w`, `:q`, `:e`), executing them and tracking history.
   - `modes/`: Individual keyboard mapping implementations.
@@ -56,10 +56,10 @@ The editor's context structures are defined in [types.h](file:///data/data/com.t
 - [UndoAction](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L60) & [UndoStack](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L72): Implements transaction nodes tracking inserted/deleted characters/lines.
 - [StitchBuffer](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L77): Manages line arrays, dirty flag, file path, and the undo/redo stack.
 - [StitchView](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L86): Renders window geometry, off-screen offsets (`row_off`/`col_off`), and cursor coordinate offsets (`cx`/`cy`).
-- [StitchUI](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L95): Stores line-number display states, overlay popup triggers, and the bottom message text.
-- [StitchEditor](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L101): Keeps active modes, visual anchors, recent search matches, and command history cache.
-- [StitchCore](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L111): Keeps terminal raw attributes (`orig_termios`) and spawned shell process PIDs.
-- [StitchState](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L118): The top-level combined state context passed around the app.
+- [StitchUI](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L97): Stores line-number display states, prompt cursor coordinates, and the bottom message text.
+- [StitchEditor](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L104): Keeps active modes, visual anchors, recent search matches, and command history cache.
+- [StitchCore](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L116): Keeps terminal raw attributes (`orig_termios`) and spawned shell process PIDs.
+- [StitchState](file:///data/data/com.termux/files/home/works/stitch/include/stitch/types.h#L123): The top-level combined state context passed around the app, including the tutor Stashed Buffer.
 
 ## Technical Standards
 
@@ -76,7 +76,7 @@ Every specific behavior is isolated to its own file. Do not introduce monolithic
 - **Visual Mode**: Accessible via `v`. Allows selecting blocks of text to delete (`d`/`x`). Yanking (`y`) is currently disabled. Press `%` to instantly select the entire file. Supports multi-line selections and reverse-video highlighting.
 - **Stabilization Audit (v0.1.1)**: Comprehensive hardening of memory management, UTF-8 safety, and atomic buffer operations.
 - **Dynamic Line Numbers**: Toggleable via `:number` (or `:nu`) and `:nonumber` (or `:nonu`).
-- **Help Overlay**: Accessible via `:h` or `:help`. Displays a clean, structured guide to core keybindings, dismissed with `Esc`.
+- **Interactive Tutor**: Accessible via `:h`, `:help`, or `:tutor`. Instantly stashes your current file in memory and loads a comprehensive hands-on tutorial into the main buffer. It is completely safe to edit and practice on. Dismissed with `:q!`, instantly restoring your stashed file, cursor position, and undo history without any ghost lines.
 - **Mouse Support**: Basic click-to-move support for intuitive cursor positioning within the text grid.
 - **Scroll Margins (Scrolloff)**: Horizontal (5 chars) and vertical (3 lines) margins ensure the cursor always stays within a visible context area.
 - **Tab Key Support**: Inserts a tab character with a configurable stop (standardized to 4 spaces).

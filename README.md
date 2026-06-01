@@ -6,6 +6,7 @@ Stitch is a minimalist, modal text editor written in C11. It is designed to prov
 
 - **Modal Editing**: Separate modes for navigation, insertion, and commands.
 - **Component-Based Architecture**: Modular design for maintainability.
+- **Interactive Tutor**: Built-in interactive 11-lesson tutorial buffer (`:help`) that safely stashes your work while you practice.
 - **Visual Context**: Horizontal and vertical scroll margins to keep the cursor within a visible area.
 - **Quality of Life**: Mouse support for cursor positioning, undo/redo engine, and real-time bracket matching.
 - **Clean UI**: A functional status bar and message area with a minimal aesthetic.

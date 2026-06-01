@@ -19,5 +19,8 @@ void cmd_shell_execute(StitchState *state, const char *command);
 
 /* Movement logic */
 void editor_move_cursor(StitchState *state, int key);
+void editor_move_word_forward(StitchState *state);
+void editor_move_word_backward(StitchState *state);
+void editor_find_char(StitchState *state, int c);
 
 #endif

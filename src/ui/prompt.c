@@ -17,6 +17,10 @@ char *ui_prompt(StitchState *state, char *prompt, void (*callback)(StitchState *
 
     int history_idx = state->editor.history_count;
     char *saved_buf = NULL;
+    
+    char *p = strstr(prompt, "%s");
+    state->ui.prompt_cursor_offset = p ? (size_t)(p - prompt) : 0;
+    state->ui.prompt_cursor = 0;
 
     while (1) {
         ui_set_status_message(state, prompt, buf);
@@ -24,8 +28,23 @@ char *ui_prompt(StitchState *state, char *prompt, void (*callback)(StitchState *
 
         int c = core_read_key(state);
 
-        if (c == STITCH_DEL_KEY || c == CTRL_KEY('h') || c == STITCH_BACKSPACE) {
-            if (buflen != 0) buf[--buflen] = '\0';
+        if (c == STITCH_DEL_KEY || c == STITCH_BACKSPACE || c == CTRL_KEY('h')) {
+            if (c == STITCH_DEL_KEY) {
+                if (state->ui.prompt_cursor < buflen) {
+                    memmove(&buf[state->ui.prompt_cursor], &buf[state->ui.prompt_cursor + 1], buflen - state->ui.prompt_cursor);
+                    buflen--;
+                }
+            } else {
+                if (state->ui.prompt_cursor > 0) {
+                    memmove(&buf[state->ui.prompt_cursor - 1], &buf[state->ui.prompt_cursor], buflen - state->ui.prompt_cursor + 1);
+                    state->ui.prompt_cursor--;
+                    buflen--;
+                }
+            }
+        } else if (c == STITCH_ARROW_LEFT) {
+            if (state->ui.prompt_cursor > 0) state->ui.prompt_cursor--;
+        } else if (c == STITCH_ARROW_RIGHT) {
+            if (state->ui.prompt_cursor < buflen) state->ui.prompt_cursor++;
         } else if (c == '\x1b') {
             ui_set_status_message(state, "");
             if (callback) callback(state, buf, c);
@@ -54,6 +73,7 @@ char *ui_prompt(StitchState *state, char *prompt, void (*callback)(StitchState *
                 strcpy(buf, saved_buf);
             }
             buflen = strlen(buf);
+            state->ui.prompt_cursor = buflen;
         } else if (c == '\r') {
             ui_set_status_message(state, "");
             if (callback) callback(state, buf, c);
@@ -64,8 +84,10 @@ char *ui_prompt(StitchState *state, char *prompt, void (*callback)(StitchState *
                 bufsize *= 2;
                 buf = editorRealloc(buf, bufsize);
             }
-            buf[buflen++] = (char)c;
-            buf[buflen] = '\0';
+            memmove(&buf[state->ui.prompt_cursor + 1], &buf[state->ui.prompt_cursor], buflen - state->ui.prompt_cursor + 1);
+            buf[state->ui.prompt_cursor] = (char)c;
+            state->ui.prompt_cursor++;
+            buflen++;
         }
 
         if (callback) callback(state, buf, c);
